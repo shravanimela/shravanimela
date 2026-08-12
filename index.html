@@ -748,23 +748,390 @@ body::before {
 
 <script>
 
-
-/* ===================================
-   SONG LIST
-=================================== */
-
-
 const songs = [
 
     {
         title: "भोलेनाथ भजन 01",
-        file: "music/song1.mp3"
+        file: "./music/song1.mp3"
     },
 
     {
         title: "भोलेनाथ भजन 02",
-        file: "music/song2.mp3"
-    },
+        file: "./music/song2.mp3"
+    }
 
-    {
-        title: "भोलेनाथ भजन
+];
+
+
+const audio = document.getElementById("audio");
+
+const playBtn = document.getElementById("playBtn");
+
+const prevBtn = document.getElementById("prevBtn");
+
+const nextBtn = document.getElementById("nextBtn");
+
+const progress = document.getElementById("progress");
+
+const volume = document.getElementById("volume");
+
+const songTitle = document.getElementById("songTitle");
+
+const songNumber = document.getElementById("songNumber");
+
+const playlist = document.getElementById("playlist");
+
+const album = document.getElementById("album");
+
+const currentTime = document.getElementById("currentTime");
+
+const duration = document.getElementById("duration");
+
+
+let currentSong = 0;
+
+
+/* =========================
+   LOAD SONG
+========================= */
+
+function loadSong(index) {
+
+    currentSong = index;
+
+    audio.src = songs[index].file;
+
+    audio.load();
+
+    songTitle.textContent =
+        songs[index].title;
+
+    songNumber.textContent =
+        "गाना " + (index + 1) + " / " + songs.length;
+
+    progress.value = 0;
+
+    updatePlaylist();
+}
+
+
+/* =========================
+   PLAY SONG
+========================= */
+
+function playSong() {
+
+    audio.play()
+        .then(function () {
+
+            playBtn.textContent = "⏸";
+
+            album.classList.add("playing");
+
+        })
+        .catch(function (error) {
+
+            console.log("Audio error:", error);
+
+        });
+
+}
+
+
+/* =========================
+   PAUSE SONG
+========================= */
+
+function pauseSong() {
+
+    audio.pause();
+
+    playBtn.textContent = "▶";
+
+    album.classList.remove("playing");
+
+}
+
+
+/* =========================
+   PLAY / PAUSE BUTTON
+========================= */
+
+playBtn.addEventListener(
+    "click",
+    function () {
+
+        if (audio.paused) {
+
+            playSong();
+
+        } else {
+
+            pauseSong();
+
+        }
+
+    }
+);
+
+
+/* =========================
+   NEXT SONG
+========================= */
+
+nextBtn.addEventListener(
+    "click",
+    function () {
+
+        currentSong++;
+
+        if (currentSong >= songs.length) {
+
+            currentSong = 0;
+
+        }
+
+        loadSong(currentSong);
+
+        playSong();
+
+    }
+);
+
+
+/* =========================
+   PREVIOUS SONG
+========================= */
+
+prevBtn.addEventListener(
+    "click",
+    function () {
+
+        currentSong--;
+
+        if (currentSong < 0) {
+
+            currentSong =
+                songs.length - 1;
+
+        }
+
+        loadSong(currentSong);
+
+        playSong();
+
+    }
+);
+
+
+/* =========================
+   AUTOMATIC NEXT SONG
+========================= */
+
+audio.addEventListener(
+    "ended",
+    function () {
+
+        currentSong++;
+
+        if (currentSong >= songs.length) {
+
+            currentSong = 0;
+
+        }
+
+        loadSong(currentSong);
+
+        playSong();
+
+    }
+);
+
+
+/* =========================
+   PROGRESS BAR
+========================= */
+
+audio.addEventListener(
+    "timeupdate",
+    function () {
+
+        if (audio.duration) {
+
+            progress.value =
+                (audio.currentTime /
+                audio.duration) * 100;
+
+        }
+
+        currentTime.textContent =
+            formatTime(audio.currentTime);
+
+    }
+);
+
+
+/* =========================
+   SONG DURATION
+========================= */
+
+audio.addEventListener(
+    "loadedmetadata",
+    function () {
+
+        duration.textContent =
+            formatTime(audio.duration);
+
+    }
+);
+
+
+/* =========================
+   PROGRESS SEEK
+========================= */
+
+progress.addEventListener(
+    "input",
+    function () {
+
+        if (audio.duration) {
+
+            audio.currentTime =
+                (progress.value / 100) *
+                audio.duration;
+
+        }
+
+    }
+);
+
+
+/* =========================
+   VOLUME
+========================= */
+
+volume.addEventListener(
+    "input",
+    function () {
+
+        audio.volume =
+            volume.value;
+
+    }
+);
+
+
+/* =========================
+   TIME FORMAT
+========================= */
+
+function formatTime(seconds) {
+
+    if (!isFinite(seconds)) {
+
+        return "0:00";
+
+    }
+
+    const minutes =
+        Math.floor(seconds / 60);
+
+    const secondsLeft =
+        Math.floor(seconds % 60);
+
+    return minutes + ":" +
+        String(secondsLeft).padStart(2, "0");
+
+}
+
+
+/* =========================
+   CREATE PLAYLIST
+========================= */
+
+function createPlaylist() {
+
+    playlist.innerHTML = "";
+
+    songs.forEach(
+        function (song, index) {
+
+            const track =
+                document.createElement("div");
+
+            track.className = "track";
+
+            track.innerHTML = `
+
+                <div class="track-number">
+                    ${index + 1}
+                </div>
+
+                <div class="track-name">
+                    ${song.title}
+                </div>
+
+                <div class="track-icon">
+                    🎵
+                </div>
+
+            `;
+
+            track.addEventListener(
+                "click",
+                function () {
+
+                    loadSong(index);
+
+                    playSong();
+
+                }
+            );
+
+            playlist.appendChild(track);
+
+        }
+    );
+
+}
+
+
+/* =========================
+   UPDATE PLAYLIST
+========================= */
+
+function updatePlaylist() {
+
+    const tracks =
+        document.querySelectorAll(".track");
+
+    tracks.forEach(
+        function (track, index) {
+
+            if (index === currentSong) {
+
+                track.classList.add("active");
+
+            } else {
+
+                track.classList.remove("active");
+
+            }
+
+        }
+    );
+
+}
+
+
+/* =========================
+   INITIAL SETUP
+========================= */
+
+audio.volume = 0.8;
+
+createPlaylist();
+
+loadSong(0);
+
+</script>
